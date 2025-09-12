@@ -1,0 +1,12 @@
+# SberCloud credentials
+access_key = "your-access-key"
+secret_key = "your-secret-key"
+
+# PostgreSQL passwords
+dev_postgres_password  = "dev-password-123"
+prod_postgres_password = "prod-password-456"
+
+# Network configuration
+vpc_cidr         = "10.0.0.0/16"
+subnet_cidr      = "10.0.1.0/24"
+availability_zone = "ru-moscow-1a"
