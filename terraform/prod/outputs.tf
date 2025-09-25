@@ -36,6 +36,22 @@ output "jira_url" {
 output "postgres_endpoint" {
   description = "PostgreSQL instance endpoint"
   value       = sbercloud_rds_instance.prod_postgres.private_ips[0]
+  sensitive   = true
+}
+
+output "cluster_id" {
+  description = "CCE cluster ID"
+  value       = sbercloud_cce_cluster.main.id
+}
+
+output "vpc_id" {
+  description = "VPC ID"
+  value       = sbercloud_vpc.main.id
+}
+
+output "subnet_id" {
+  description = "Subnet ID"
+  value       = sbercloud_vpc_subnet.main.id
 }
 
 output "storage_class_name" {

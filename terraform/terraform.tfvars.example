@@ -2,11 +2,21 @@
 access_key = "your-access-key"
 secret_key = "your-secret-key"
 
-# PostgreSQL passwords
-dev_postgres_password  = "dev-password-123"
-prod_postgres_password = "prod-password-456"
+# PostgreSQL master passwords
+dev_postgres_password  = "dev-master-password-123"
+prod_postgres_password = "prod-master-password-456"
+
+# Individual service database passwords (recommended for production)
+# If not set, will use master password
+jira_db_password     = "secure-jira-password-789"
+bitbucket_db_password = "secure-bitbucket-password-012"
+jenkins_db_password   = "secure-jenkins-password-345"
 
 # Network configuration
 vpc_cidr         = "10.0.0.0/16"
 subnet_cidr      = "10.0.1.0/24"
 availability_zone = "ru-moscow-1a"
+
+# Security: IP ranges allowed for SSH and Kubernetes API access
+# Change this to your actual admin IP ranges for security
+admin_ip_ranges = ["10.0.0.0/8", "192.168.1.0/24"]
