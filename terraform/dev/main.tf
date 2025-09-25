@@ -87,19 +87,19 @@ resource "sbercloud_rds_pg_database" "jenkins_db" {
 resource "sbercloud_rds_pg_account" "jira_user" {
   instance_id = sbercloud_rds_instance.dev_postgres.id
   name        = "jira_user"
-  password    = var.dev_postgres_password
+  password    = var.jira_db_password != "" ? var.jira_db_password : var.dev_postgres_password
 }
 
 resource "sbercloud_rds_pg_account" "bitbucket_user" {
   instance_id = sbercloud_rds_instance.dev_postgres.id
   name        = "bitbucket_user"
-  password    = var.dev_postgres_password
+  password    = var.bitbucket_db_password != "" ? var.bitbucket_db_password : var.dev_postgres_password
 }
 
 resource "sbercloud_rds_pg_account" "jenkins_user" {
   instance_id = sbercloud_rds_instance.dev_postgres.id
   name        = "jenkins_user"
-  password    = var.dev_postgres_password
+  password    = var.jenkins_db_password != "" ? var.jenkins_db_password : var.dev_postgres_password
 }
 
 # -----------------------------
@@ -112,7 +112,7 @@ resource "kubernetes_secret" "jira_db" {
   }
   data = {
     username = sbercloud_rds_pg_account.jira_user.name
-    password = var.dev_postgres_password
+    password = var.jira_db_password != "" ? var.jira_db_password : var.dev_postgres_password
   }
   type = "Opaque"
 }
@@ -124,7 +124,7 @@ resource "kubernetes_secret" "bitbucket_db" {
   }
   data = {
     username = sbercloud_rds_pg_account.bitbucket_user.name
-    password = var.dev_postgres_password
+    password = var.bitbucket_db_password != "" ? var.bitbucket_db_password : var.dev_postgres_password
   }
   type = "Opaque"
 }
@@ -136,7 +136,7 @@ resource "kubernetes_secret" "jenkins_db" {
   }
   data = {
     username = sbercloud_rds_pg_account.jenkins_user.name
-    password = var.dev_postgres_password
+    password = var.jenkins_db_password != "" ? var.jenkins_db_password : var.dev_postgres_password
   }
   type = "Opaque"
 }
@@ -150,6 +150,7 @@ resource "helm_release" "jenkins" {
   name       = "jenkins"
   repository = "https://charts.jenkins.io"
   chart      = "jenkins"
+  version    = "4.8.3"
   namespace  = kubernetes_namespace.dev.metadata[0].name
 
   values = [
@@ -175,6 +176,7 @@ resource "helm_release" "jira" {
   name       = "jira"
   repository = "https://atlassian.github.io/data-center-helm-charts"
   chart      = "jira"
+  version    = "1.17.0"
   namespace  = kubernetes_namespace.dev.metadata[0].name
 
   values = [
@@ -203,6 +205,7 @@ resource "helm_release" "bitbucket" {
   name       = "bitbucket"
   repository = "https://atlassian.github.io/data-center-helm-charts"
   chart      = "bitbucket"
+  version    = "1.17.2"
   namespace  = kubernetes_namespace.dev.metadata[0].name
 
   values = [

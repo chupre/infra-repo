@@ -73,11 +73,49 @@ resource "kubernetes_persistent_volume_claim" "jira_pvc" {
   }
 }
 
+# -----------------------------
+# RDS Databases for Prod (using existing prod_postgres)
+# -----------------------------
+resource "sbercloud_rds_pg_database" "jira_db" {
+  instance_id = sbercloud_rds_instance.prod_postgres.id
+  name        = "jira_prod"
+}
+
+resource "sbercloud_rds_pg_database" "bitbucket_db" {
+  instance_id = sbercloud_rds_instance.prod_postgres.id
+  name        = "bitbucket_prod"
+}
+
+resource "sbercloud_rds_pg_database" "jenkins_db" {
+  instance_id = sbercloud_rds_instance.prod_postgres.id
+  name        = "jenkins_prod"
+}
+
+# PostgreSQL Users
+resource "sbercloud_rds_pg_account" "jira_user" {
+  instance_id = sbercloud_rds_instance.prod_postgres.id
+  name        = "jira_user"
+  password    = var.jira_db_password
+}
+
+resource "sbercloud_rds_pg_account" "bitbucket_user" {
+  instance_id = sbercloud_rds_instance.prod_postgres.id
+  name        = "bitbucket_user"
+  password    = var.bitbucket_db_password
+}
+
+resource "sbercloud_rds_pg_account" "jenkins_user" {
+  instance_id = sbercloud_rds_instance.prod_postgres.id
+  name        = "jenkins_user"
+  password    = var.jenkins_db_password
+}
+
 # Helm releases
 resource "helm_release" "jenkins" {
   name       = "jenkins"
   repository = "https://charts.jenkins.io"
   chart      = "jenkins"
+  version    = "4.8.3"
   namespace  = kubernetes_namespace.prod.metadata[0].name
 
   values = [
@@ -101,13 +139,14 @@ resource "helm_release" "jenkins" {
     })
   ]
 
-  depends_on = [kubernetes_persistent_volume_claim.jenkins_pvc]
+  depends_on = [kubernetes_persistent_volume_claim.jenkins_pvc, kubernetes_secret.jenkins_db]
 }
 
 resource "helm_release" "bitbucket" {
   name       = "bitbucket"
   repository = "https://atlassian.github.io/data-center-helm-charts"
   chart      = "bitbucket"
+  version    = "1.17.2"
   namespace  = kubernetes_namespace.prod.metadata[0].name
 
   values = [
@@ -143,6 +182,7 @@ resource "helm_release" "jira" {
   name       = "jira"
   repository = "https://atlassian.github.io/data-center-helm-charts"
   chart      = "jira"
+  version    = "1.17.0"
   namespace  = kubernetes_namespace.prod.metadata[0].name
 
   values = [
@@ -181,8 +221,8 @@ resource "kubernetes_secret" "jira_db" {
     namespace = kubernetes_namespace.prod.metadata[0].name
   }
   data = {
-    username = "jira_user"
-    password = var.prod_postgres_password
+    username = sbercloud_rds_pg_account.jira_user.name
+    password = var.jira_db_password
   }
   type = "Opaque"
 }
@@ -193,8 +233,8 @@ resource "kubernetes_secret" "bitbucket_db" {
     namespace = kubernetes_namespace.prod.metadata[0].name
   }
   data = {
-    username = "bitbucket_user"
-    password = var.prod_postgres_password
+    username = sbercloud_rds_pg_account.bitbucket_user.name
+    password = var.bitbucket_db_password
   }
   type = "Opaque"
 }
@@ -205,8 +245,8 @@ resource "kubernetes_secret" "jenkins_db" {
     namespace = kubernetes_namespace.prod.metadata[0].name
   }
   data = {
-    username = "jenkins_user"
-    password = var.prod_postgres_password
+    username = sbercloud_rds_pg_account.jenkins_user.name
+    password = var.jenkins_db_password
   }
   type = "Opaque"
 }
